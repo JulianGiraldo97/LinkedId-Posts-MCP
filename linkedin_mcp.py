@@ -207,6 +207,7 @@ Constraints:
 - Posts must be immediately ready to publish — polished and fluent in both languages.
 - Posts should not exceed 120 words per language.
 - If multiple articles are provided, focus on the most relevant one.
+- All information must be new, not older than 2 weeks.
 
 Input format:
 {
