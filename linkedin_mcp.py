@@ -9,9 +9,8 @@ LinkedIn posts using OpenAI's API with the Model Completion Protocol (MCP).
 import os
 import json
 import sys
-import requests
-import feedparser
-from datetime import datetime, timedelta
+import subprocess
+import tempfile
 from typing import List, Dict, Optional
 from dotenv import load_dotenv
 import openai
@@ -20,78 +19,162 @@ import openai
 load_dotenv()
 
 class NewsFetcher:
-    """Handles fetching AI news from various sources."""
+    """Handles fetching AI news using MCP server."""
     
     def __init__(self):
-        self.newsapi_key = os.getenv('NEWSAPI_KEY')
-        self.google_news_rss = "https://news.google.com/rss/search?q=artificial+intelligence+AI&hl=en-US&gl=US&ceid=US:en"
+        self.mcp_server_path = os.getenv('MCP_SERVER_PATH', 'mcp-server-news')
+        self.client = openai.OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
     
-    def fetch_from_newsapi(self) -> List[Dict]:
-        """Fetch AI news from NewsAPI."""
-        if not self.newsapi_key:
-            print("Warning: NEWSAPI_KEY not found. Skipping NewsAPI.")
-            return []
-        
-        url = "https://newsapi.org/v2/everything"
-        params = {
-            'q': 'artificial intelligence OR AI OR machine learning',
-            'language': 'en',
-            'sortBy': 'publishedAt',
-            'pageSize': 5,
-            'apiKey': self.newsapi_key
-        }
-        
+    def search_news_with_mcp(self, query: str = "latest artificial intelligence AI news") -> List[Dict]:
+        """Search for AI news using MCP server."""
         try:
-            response = requests.get(url, params=params, timeout=10)
-            response.raise_for_status()
-            data = response.json()
+            print(f"Searching for news with MCP: '{query}'")
             
-            articles = []
-            for article in data.get('articles', [])[:2]:  # Top 2 articles
-                if article.get('title') and article.get('description'):
-                    articles.append({
-                        'title': article['title'],
-                        'summary': article['description'],
-                        'url': article['url']
-                    })
+            # Create a temporary MCP request file
+            mcp_request = {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "tools/call",
+                "params": {
+                    "name": "search_news",
+                    "arguments": {
+                        "query": query,
+                        "max_results": 2,
+                        "language": "en"
+                    }
+                }
+            }
             
-            return articles
+            # Try to use MCP server if available
+            try:
+                with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+                    json.dump(mcp_request, f)
+                    temp_file = f.name
+                
+                # Execute MCP server command
+                result = subprocess.run(
+                    [self.mcp_server_path, temp_file],
+                    capture_output=True,
+                    text=True,
+                    timeout=30
+                )
+                
+                os.unlink(temp_file)  # Clean up temp file
+                
+                if result.returncode == 0:
+                    response = json.loads(result.stdout)
+                    if 'result' in response and 'content' in response['result']:
+                        return self._parse_mcp_news_response(response['result']['content'])
+                
+            except (subprocess.TimeoutExpired, FileNotFoundError, json.JSONDecodeError) as e:
+                print(f"MCP server not available or failed: {e}")
+                print("Falling back to OpenAI-based news search...")
+            
+            # Fallback: Use OpenAI to search for recent AI news
+            return self._search_news_with_openai(query)
+            
         except Exception as e:
-            print(f"Error fetching from NewsAPI: {e}")
+            print(f"Error in MCP news search: {e}")
             return []
     
-    def fetch_from_google_news(self) -> List[Dict]:
-        """Fetch AI news from Google News RSS."""
+    def _parse_mcp_news_response(self, content: str) -> List[Dict]:
+        """Parse MCP server response into article format."""
         try:
-            feed = feedparser.parse(self.google_news_rss)
+            # Try to extract structured data from MCP response
             articles = []
+            lines = content.split('\n')
             
-            for entry in feed.entries[:2]:  # Top 2 articles
-                if entry.get('title') and entry.get('summary'):
-                    articles.append({
-                        'title': entry.title,
-                        'summary': entry.summary,
-                        'url': entry.link
-                    })
+            current_article = {}
+            for line in lines:
+                line = line.strip()
+                if line.startswith('Title:') or line.startswith('**Title:'):
+                    if current_article:
+                        articles.append(current_article)
+                    current_article = {'title': line.split(':', 1)[1].strip()}
+                elif line.startswith('Summary:') or line.startswith('**Summary:'):
+                    current_article['summary'] = line.split(':', 1)[1].strip()
+                elif line.startswith('URL:') or line.startswith('**URL:'):
+                    current_article['url'] = line.split(':', 1)[1].strip()
+                elif line.startswith('http') and 'url' not in current_article:
+                    current_article['url'] = line
             
-            return articles
+            if current_article and 'title' in current_article:
+                articles.append(current_article)
+            
+            return articles[:2]  # Return top 2 articles
+            
         except Exception as e:
-            print(f"Error fetching from Google News: {e}")
+            print(f"Error parsing MCP response: {e}")
+            return []
+    
+    def _search_news_with_openai(self, query: str) -> List[Dict]:
+        """Fallback: Use OpenAI to search for and summarize recent AI news."""
+        try:
+            print("Using OpenAI to search for recent AI news...")
+            
+            search_prompt = f"""
+You are a news researcher. Find the 2 most recent and relevant AI/artificial intelligence news articles.
+
+Search query: "{query}"
+
+Please provide the information in this exact JSON format:
+{{
+  "articles": [
+    {{
+      "title": "Article title here",
+      "summary": "Brief summary of the article content",
+      "url": "Article URL if available, or 'N/A' if not"
+    }}
+  ]
+}}
+
+Focus on:
+- Recent developments in AI, machine learning, or artificial intelligence
+- Major company announcements (OpenAI, Google, Microsoft, etc.)
+- Breakthrough research or new AI models
+- Industry trends and analysis
+
+If you cannot find recent articles, provide the most relevant recent AI news you're aware of.
+"""
+            
+            response = self.client.chat.completions.create(
+                model="gpt-4",
+                messages=[
+                    {"role": "system", "content": "You are a helpful news researcher who provides accurate, recent information about AI developments."},
+                    {"role": "user", "content": search_prompt}
+                ],
+                temperature=0.3,
+                max_tokens=800
+            )
+            
+            content = response.choices[0].message.content.strip()
+            
+            # Try to parse JSON response
+            try:
+                data = json.loads(content)
+                articles = data.get('articles', [])
+                print(f"Found {len(articles)} articles via OpenAI search")
+                return articles
+            except json.JSONDecodeError:
+                print("Could not parse OpenAI response as JSON, creating fallback article")
+                return [{
+                    'title': 'Recent AI Developments',
+                    'summary': content[:200] + "..." if len(content) > 200 else content,
+                    'url': 'N/A'
+                }]
+                
+        except Exception as e:
+            print(f"Error in OpenAI news search: {e}")
             return []
     
     def fetch_latest_news(self) -> List[Dict]:
-        """Fetch latest AI news from available sources."""
-        print("Fetching latest AI news...")
+        """Fetch latest AI news using MCP server."""
+        print("Fetching latest AI news using MCP...")
         
-        # Try NewsAPI first, then fallback to Google News
-        articles = self.fetch_from_newsapi()
-        
-        if not articles:
-            print("Falling back to Google News RSS...")
-            articles = self.fetch_from_google_news()
+        articles = self.search_news_with_mcp("latest artificial intelligence AI news developments")
         
         if not articles:
-            print("No articles found from any source.")
+            print("No articles found from MCP search.")
             return []
         
         print(f"Found {len(articles)} articles")
