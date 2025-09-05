@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# LinkedIn Posts MCP - Web UI Launcher
+# LinkedIn Posts MCP - Main Launcher
 # This script launches the web-based UI for the LinkedIn Posts MCP application
 
 set -e  # Exit on any error
@@ -110,7 +110,7 @@ open_browser() {
 # Main script logic
 main() {
     echo "=========================================="
-    echo "LinkedIn Posts MCP - Web UI Launcher"
+    echo "LinkedIn Posts MCP - Main Launcher"
     echo "=========================================="
     echo ""
     

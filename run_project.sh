@@ -77,22 +77,10 @@ check_required_vars() {
 
 # LinkedIn API functionality removed - using manual posting instead
 
-# Function to run the main project
-run_project() {
-    print_status "Starting LinkedIn Posts MCP project..."
-    print_status "This will generate AI news and prepare for manual LinkedIn posting"
-    
-    # Generate the post
-    python linkedin_mcp.py
-    
-    if [ $? -eq 0 ]; then
-        print_success "Post generated successfully!"
-        print_status "Opening manual posting interface..."
-        python linkedin_manual_poster.py
-    else
-        print_error "Post generation failed"
-        exit 1
-    fi
+# Function to run the web UI (default)
+run_web_ui() {
+    print_status "Launching LinkedIn Posts MCP Web UI..."
+    python linkedin_web_ui.py
 }
 
 # Function to show help
@@ -102,21 +90,15 @@ show_help() {
     echo "Usage: $0 [OPTION]"
     echo ""
     echo "Options:"
-    echo "  run, -r, --run     Run the complete project (default)"
-    echo "  gen, -g, --gen     Generate post only"
-    echo "  manual, -m, --manual Post manually (copy/paste to LinkedIn)"
-    echo "  ui, -u, --ui       Launch simple local UI (tkinter)"
-    echo "  web, -w, --web     Launch web UI (browser-based)"
+    echo "  web, -w, --web     Launch web UI (browser-based) - DEFAULT"
+    echo "  gen, -g, --gen     Generate post only (command line)"
     echo "  setup, -s, --setup Setup project (install dependencies, check config)"
     echo "  help, -h, --help   Show this help message"
     echo ""
     echo "Examples:"
-    echo "  $0                 # Run complete project"
-    echo "  $0 run             # Run complete project"
-    echo "  $0 gen             # Generate post only"
-    echo "  $0 manual          # Post manually (copy/paste to LinkedIn)"
-    echo "  $0 ui              # Launch simple local UI (tkinter)"
+    echo "  $0                 # Launch web UI (default)"
     echo "  $0 web             # Launch web UI (browser-based)"
+    echo "  $0 gen             # Generate post only (command line)"
     echo "  $0 setup           # Setup project"
 }
 
@@ -124,24 +106,6 @@ show_help() {
 run_generate() {
     print_status "Generating AI news post..."
     python linkedin_mcp.py
-}
-
-# Function to run manual posting
-run_manual_post() {
-    if [ ! -f "linkedin_post.json" ]; then
-        print_error "linkedin_post.json not found!"
-        print_status "Please run 'python linkedin_mcp.py' first to generate a post"
-        exit 1
-    fi
-    
-    print_status "Opening manual LinkedIn posting interface..."
-    python linkedin_manual_poster.py
-}
-
-# Function to launch UI
-run_ui() {
-    print_status "Launching LinkedIn Posts MCP UI..."
-    python linkedin_ui.py
 }
 
 # Function to launch web UI
@@ -158,7 +122,7 @@ run_setup() {
     check_env
     check_required_vars
     print_success "Project setup completed!"
-    print_status "You can now run: $0 ui (to launch the UI) or $0 run (for command line)"
+    print_status "You can now run: $0 (to launch the web UI) or $0 gen (for command line)"
 }
 
 # Main script logic
@@ -173,31 +137,16 @@ main() {
     setup_venv
     
     # Parse command line arguments
-    case "${1:-run}" in
-        "run"|"-r"|"--run")
+    case "${1:-web}" in
+        "web"|"-w"|"--web")
             check_env
             check_required_vars
-            run_project
+            run_web_ui
             ;;
         "gen"|"-g"|"--gen")
             check_env
             check_required_vars
             run_generate
-            ;;
-        "manual"|"-m"|"--manual")
-            check_env
-            check_required_vars
-            run_manual_post
-            ;;
-        "ui"|"-u"|"--ui")
-            check_env
-            check_required_vars
-            run_ui
-            ;;
-        "web"|"-w"|"--web")
-            check_env
-            check_required_vars
-            run_web_ui
             ;;
         "setup"|"-s"|"--setup")
             run_setup
