@@ -8,6 +8,8 @@ A Python application that fetches the latest AI news and generates professional 
 - 🤖 Generates professional bilingual LinkedIn posts (English & Spanish)
 - 📝 Uses OpenAI's GPT-4 with custom MCP prompts
 - 💾 Outputs results to console and JSON file
+- 🖥️ **Simple local UI** with one-click generation and copy-to-clipboard
+- 🌐 **Web-based UI** that runs in your browser for maximum accessibility
 - 🔧 Configurable via environment variables
 - 🔄 Intelligent fallback to OpenAI-based news search if MCP server unavailable
 
@@ -32,12 +34,23 @@ A Python application that fetches the latest AI news and generates professional 
 
 ## Usage
 
-### Quick Start (Recommended)
+### Quick Start with Web UI (Recommended)
 ```bash
-./run_project.sh
+# Launch the web-based UI (runs in browser)
+./run_project.sh web
+# or
+./run_web_ui.sh
 ```
 
-### Individual Commands
+### Alternative: Local Desktop UI
+```bash
+# Launch the simple local UI (tkinter)
+./run_project.sh ui
+# or
+./run_ui.sh
+```
+
+### Command Line Usage
 ```bash
 # Run complete project (generate + manual posting)
 ./run_project.sh run
@@ -64,6 +77,28 @@ python linkedin_mcp.py
 python linkedin_manual_poster.py
 ```
 
+### Web UI Features (Recommended)
+The web-based UI provides:
+- **🌐 Browser-based**: Runs in any modern web browser
+- **📱 Responsive design**: Works on desktop, tablet, and mobile
+- **🚀 One-click generation**: Click "Generate AI News Post" to create bilingual posts
+- **📊 Real-time updates**: Live progress indicators and status updates
+- **📋 Copy to clipboard**: One-click copying of either language version
+- **🔗 Direct LinkedIn access**: One-click link to open LinkedIn
+- **⚡ Modern interface**: Clean, professional design with Bootstrap
+- **🔄 No page refresh**: AJAX-powered for smooth user experience
+
+### Desktop UI Features (Alternative)
+The local desktop UI provides:
+- **🖥️ Native application**: Runs as a desktop app using tkinter
+- **One-click generation**: Click "Generate AI News Post" to create bilingual posts
+- **Side-by-side display**: View English and Spanish versions simultaneously
+- **Copy to clipboard**: One-click copying of either language version
+- **Open LinkedIn**: Direct link to open LinkedIn in your browser
+- **Real-time status**: Progress indicators and status messages
+- **Error handling**: Clear error messages and validation
+
+### Command Line Process
 The scripts will:
 1. Search for the latest AI news using MCP server (or OpenAI fallback)
 2. Generate a bilingual LinkedIn post using OpenAI
@@ -142,6 +177,29 @@ The project uses manual posting for maximum reliability and control:
 - Internet connection
 - Valid OpenAI API key
 - Optional MCP news server for enhanced news fetching
+
+### For Desktop UI (Optional)
+- tkinter (usually included with Python, but may need separate installation on some systems)
+
+**Installing tkinter (if needed):**
+On some systems, tkinter may need to be installed separately:
+
+**Ubuntu/Debian:**
+```bash
+sudo apt-get install python3-tk
+```
+
+**macOS (with Homebrew):**
+```bash
+brew install python-tk
+```
+
+**Windows:**
+tkinter is usually included with Python installations.
+
+### For Web UI (Recommended)
+- Flask (automatically installed with requirements.txt)
+- Modern web browser (Chrome, Firefox, Safari, Edge)
 
 ## License
 

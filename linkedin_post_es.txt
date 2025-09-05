@@ -1,3 +1,4 @@
-¡Noticias emocionantes en el mundo de la IA! Microsoft y OpenAI han lanzado el modelo GPT-3 para desarrolladores. Este potente modelo de IA se puede utilizar para tareas como la traducción de idiomas, la redacción de ensayos y la respuesta a preguntas. El lanzamiento es parte del compromiso continuo de Microsoft para democratizar el acceso a la tecnología de IA. Descubre más: [link] #InteligenciaArtificial #Microsoft #OpenAI #GPT3
+Microsoft presenta Azure Percept, una nueva plataforma destinada a simplificar el desarrollo, entrenamiento e implementación de soluciones de IA en el borde. Con aceleradores de hardware integrados y medidas de seguridad incorporadas, busca hacer la IA más accesible para los clientes. Manténgase al día con lo último en tecnología de IA. #Microsoft #AzurePercept #AI #EdgeComputing
+[Leer más](https://techcrunch.com/2021/03/02/microsoft-announces-azure-percept-its-new-hardware-and-software-platform-to-bring-ai-to-the-edge/)
 
-https://www.microsoft.com/en-us/research/blog/microsoft-and-openai-launch-gpt-3-model-for-developers/
+https://techcrunch.com/2021/03/02/microsoft-announces-azure-percept-its-new-hardware-and-software-platform-to-bring-ai-to-the-edge/

@@ -105,6 +105,8 @@ show_help() {
     echo "  run, -r, --run     Run the complete project (default)"
     echo "  gen, -g, --gen     Generate post only"
     echo "  manual, -m, --manual Post manually (copy/paste to LinkedIn)"
+    echo "  ui, -u, --ui       Launch simple local UI (tkinter)"
+    echo "  web, -w, --web     Launch web UI (browser-based)"
     echo "  setup, -s, --setup Setup project (install dependencies, check config)"
     echo "  help, -h, --help   Show this help message"
     echo ""
@@ -113,6 +115,8 @@ show_help() {
     echo "  $0 run             # Run complete project"
     echo "  $0 gen             # Generate post only"
     echo "  $0 manual          # Post manually (copy/paste to LinkedIn)"
+    echo "  $0 ui              # Launch simple local UI (tkinter)"
+    echo "  $0 web             # Launch web UI (browser-based)"
     echo "  $0 setup           # Setup project"
 }
 
@@ -134,6 +138,18 @@ run_manual_post() {
     python linkedin_manual_poster.py
 }
 
+# Function to launch UI
+run_ui() {
+    print_status "Launching LinkedIn Posts MCP UI..."
+    python linkedin_ui.py
+}
+
+# Function to launch web UI
+run_web_ui() {
+    print_status "Launching LinkedIn Posts MCP Web UI..."
+    python linkedin_web_ui.py
+}
+
 # Function to setup project
 run_setup() {
     print_status "Setting up LinkedIn Posts MCP project..."
@@ -142,7 +158,7 @@ run_setup() {
     check_env
     check_required_vars
     print_success "Project setup completed!"
-    print_status "You can now run: $0 auth (to authenticate with LinkedIn)"
+    print_status "You can now run: $0 ui (to launch the UI) or $0 run (for command line)"
 }
 
 # Main script logic
@@ -172,6 +188,16 @@ main() {
             check_env
             check_required_vars
             run_manual_post
+            ;;
+        "ui"|"-u"|"--ui")
+            check_env
+            check_required_vars
+            run_ui
+            ;;
+        "web"|"-w"|"--web")
+            check_env
+            check_required_vars
+            run_web_ui
             ;;
         "setup"|"-s"|"--setup")
             run_setup
