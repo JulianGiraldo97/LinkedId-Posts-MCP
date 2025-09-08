@@ -11,19 +11,184 @@ import json
 import sys
 import subprocess
 import tempfile
+import requests
+import time
 from typing import List, Dict, Optional
 from dotenv import load_dotenv
 import openai
+from bs4 import BeautifulSoup
 
 # Load environment variables
 load_dotenv()
 
+class MediumScraper:
+    """Handles scraping AI news from Medium.com"""
+    
+    def __init__(self):
+        self.session = requests.Session()
+        self.session.headers.update({
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        })
+    
+    def search_ai_articles(self, max_results: int = 5) -> List[Dict]:
+        """Search for AI-related articles on Medium"""
+        try:
+            print("Searching Medium for AI articles...")
+            
+            # Medium search URL for AI articles
+            search_urls = [
+                "https://medium.com/tag/artificial-intelligence",
+                "https://medium.com/tag/machine-learning", 
+                "https://medium.com/tag/ai",
+                "https://medium.com/tag/chatgpt",
+                "https://medium.com/tag/openai"
+            ]
+            
+            articles = []
+            
+            for url in search_urls:
+                try:
+                    print(f"Scraping: {url}")
+                    response = self.session.get(url, timeout=10)
+                    response.raise_for_status()
+                    
+                    soup = BeautifulSoup(response.content, 'html.parser')
+                    found_articles = self._parse_medium_articles(soup)
+                    articles.extend(found_articles)
+                    
+                    # Avoid rate limiting
+                    time.sleep(1)
+                    
+                    if len(articles) >= max_results:
+                        break
+                        
+                except Exception as e:
+                    print(f"Error scraping {url}: {e}")
+                    continue
+            
+            # Remove duplicates and limit results
+            unique_articles = self._remove_duplicates(articles)
+            return unique_articles[:max_results]
+            
+        except Exception as e:
+            print(f"Error in Medium search: {e}")
+            return []
+    
+    def _parse_medium_articles(self, soup: BeautifulSoup) -> List[Dict]:
+        """Parse Medium articles from HTML"""
+        articles = []
+        
+        try:
+            # Look for article containers (Medium's structure may vary)
+            article_selectors = [
+                'article',
+                '[data-testid="post-preview"]',
+                '.postArticle',
+                '.streamItem',
+                'div[role="button"]'
+            ]
+            
+            for selector in article_selectors:
+                elements = soup.select(selector)
+                if elements:
+                    print(f"Found {len(elements)} elements with selector: {selector}")
+                    break
+            
+            for element in elements[:5]:  # Limit to 5 per page
+                try:
+                    article_data = self._extract_article_data(element)
+                    if article_data and article_data.get('title'):
+                        articles.append(article_data)
+                except Exception as e:
+                    print(f"Error parsing article element: {e}")
+                    continue
+                    
+        except Exception as e:
+            print(f"Error parsing Medium articles: {e}")
+        
+        return articles
+    
+    def _extract_article_data(self, element) -> Optional[Dict]:
+        """Extract article data from a single element"""
+        try:
+            # Try to find title
+            title_selectors = [
+                'h1', 'h2', 'h3',
+                '[data-testid="post-preview-title"]',
+                '.graf--title',
+                '.postArticle-title'
+            ]
+            
+            title = None
+            for selector in title_selectors:
+                title_elem = element.select_one(selector)
+                if title_elem:
+                    title = title_elem.get_text(strip=True)
+                    break
+            
+            if not title:
+                return None
+            
+            # Try to find link
+            link = None
+            link_elem = element.find('a', href=True)
+            if link_elem:
+                href = link_elem['href']
+                if href.startswith('/'):
+                    link = f"https://medium.com{href}"
+                elif href.startswith('http'):
+                    link = href
+            
+            # Try to find summary/description
+            summary_selectors = [
+                'p',
+                '[data-testid="post-preview-description"]',
+                '.graf--p',
+                '.postArticle-content'
+            ]
+            
+            summary = None
+            for selector in summary_selectors:
+                summary_elem = element.select_one(selector)
+                if summary_elem:
+                    summary = summary_elem.get_text(strip=True)
+                    if len(summary) > 50:  # Only use substantial summaries
+                        break
+            
+            # Clean up summary
+            if summary and len(summary) > 200:
+                summary = summary[:200] + "..."
+            
+            return {
+                'title': title,
+                'summary': summary or f"Read more about {title}",
+                'url': link or 'https://medium.com'
+            }
+            
+        except Exception as e:
+            print(f"Error extracting article data: {e}")
+            return None
+    
+    def _remove_duplicates(self, articles: List[Dict]) -> List[Dict]:
+        """Remove duplicate articles based on title"""
+        seen_titles = set()
+        unique_articles = []
+        
+        for article in articles:
+            title = article.get('title', '').lower().strip()
+            if title and title not in seen_titles:
+                seen_titles.add(title)
+                unique_articles.append(article)
+        
+        return unique_articles
+
 class NewsFetcher:
-    """Handles fetching AI news using MCP server."""
+    """Handles fetching AI news from Medium and other sources."""
     
     def __init__(self):
         self.mcp_server_path = os.getenv('MCP_SERVER_PATH', 'mcp-server-news')
         self.client = openai.OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+        self.medium_scraper = MediumScraper()
     
     def search_news_with_mcp(self, query: str = "latest artificial intelligence AI news") -> List[Dict]:
         """Search for AI news using MCP server."""
@@ -168,16 +333,25 @@ If you cannot find recent articles, provide the most relevant recent AI news you
             return []
     
     def fetch_latest_news(self) -> List[Dict]:
-        """Fetch latest AI news using MCP server."""
-        print("Fetching latest AI news using MCP...")
+        """Fetch latest AI news from Medium."""
+        print("Fetching latest AI news from Medium...")
         
+        # Try Medium scraping first
+        articles = self.medium_scraper.search_ai_articles(max_results=3)
+        
+        if articles:
+            print(f"Found {len(articles)} articles from Medium")
+            return articles
+        
+        # Fallback to MCP if Medium fails
+        print("Medium scraping failed, trying MCP fallback...")
         articles = self.search_news_with_mcp("latest artificial intelligence AI news developments")
         
         if not articles:
-            print("No articles found from MCP search.")
+            print("No articles found from any source.")
             return []
         
-        print(f"Found {len(articles)} articles")
+        print(f"Found {len(articles)} articles from MCP fallback")
         return articles
 
 

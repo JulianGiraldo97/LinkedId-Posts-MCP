@@ -4,7 +4,7 @@ A modern web application that fetches the latest AI news and generates professio
 
 ## Features
 
-- 🔍 Fetches latest AI news using MCP (Model Context Protocol) server
+- 🔍 **Fetches latest AI news from Medium.com** - Real articles from the AI community
 - 🤖 Generates professional bilingual LinkedIn posts (English & Spanish)
 - 📝 Uses OpenAI's GPT-4 with custom MCP prompts
 - 🌐 **Modern web interface** that runs in your browser
@@ -14,7 +14,7 @@ A modern web application that fetches the latest AI news and generates professio
 - 🔗 **Direct LinkedIn access** with one-click links
 - ⚡ **AJAX-powered** - no page refreshes needed
 - 🔧 Configurable via environment variables
-- 🔄 Intelligent fallback to OpenAI-based news search if MCP server unavailable
+- 🔄 Intelligent fallback to MCP server and OpenAI search if Medium unavailable
 
 ## Installation
 
@@ -79,8 +79,8 @@ The web-based UI provides:
 
 ### How It Works
 The application will:
-1. Search for the latest AI news using MCP server (or OpenAI fallback)
-2. Generate a bilingual LinkedIn post using OpenAI
+1. **Scrape latest AI articles from Medium.com** - Real content from the AI community
+2. Generate a bilingual LinkedIn post using OpenAI based on the Medium articles
 3. Display the results in the web interface
 4. Save the post to `linkedin_post.json`
 5. Provide copy-to-clipboard functionality for easy posting
@@ -112,8 +112,9 @@ The generated LinkedIn post will be saved in `linkedin_post.json` with the follo
 ## News Sources
 
 The application searches for news using:
-1. **MCP Server** (if available) - Uses Model Context Protocol for news search
-2. **OpenAI Fallback** - Uses GPT-4 to search and summarize recent AI news
+1. **Medium.com** (Primary) - Scrapes real AI articles from Medium's AI community
+2. **MCP Server** (Fallback) - Uses Model Context Protocol for news search
+3. **OpenAI Fallback** - Uses GPT-4 to search and summarize recent AI news
 
 ## MCP Protocol
 
@@ -159,6 +160,7 @@ The project uses a modern web interface for maximum ease of use:
 - Internet connection
 - Valid OpenAI API key
 - Flask (automatically installed with requirements.txt)
+- BeautifulSoup4 & lxml (automatically installed with requirements.txt)
 - Modern web browser (Chrome, Firefox, Safari, Edge)
 - Optional MCP news server for enhanced news fetching
 
