@@ -557,19 +557,21 @@ def main():
     print("LinkedIn Posts MCP - Web UI")
     print("=" * 50)
     print("Starting web server...")
-    print("The UI will be available at: http://localhost:5000")
-    print("If you get a 403 error, try: http://127.0.0.1:5000")
+    print("The UI will be available at: http://localhost:5001")
     print("Press Ctrl+C to stop the server")
     print("=" * 50)
     
     try:
-        # Run the Flask app with more permissive settings
-        app.run(host='0.0.0.0', port=5000, debug=False, threaded=True)
+        # Run the Flask app on port 5001 to avoid conflicts
+        app.run(host='127.0.0.1', port=5001, debug=False, threaded=True)
     except Exception as e:
-        print(f"Error starting server: {e}")
-        print("Trying alternative configuration...")
-        # Fallback to localhost only
-        app.run(host='127.0.0.1', port=5000, debug=True, threaded=True)
+        print(f"Error starting server on port 5001: {e}")
+        print("Trying port 5002...")
+        try:
+            app.run(host='127.0.0.1', port=5002, debug=False, threaded=True)
+        except Exception as e2:
+            print(f"Error starting server on port 5002: {e2}")
+            print("Please try manually: python linkedin_web_ui.py --port 5003")
 
 if __name__ == "__main__":
     main()

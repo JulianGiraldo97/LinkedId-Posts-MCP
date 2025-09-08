@@ -39,7 +39,7 @@ A modern web application that fetches the latest AI news and generates professio
 
 ### Quick Start (Recommended)
 ```bash
-# Launch the web UI (runs in browser)
+# Launch the web UI (runs in browser at http://localhost:5001)
 ./run_web_ui.sh
 # or
 ./run_project.sh

@@ -77,7 +77,7 @@ check_required_vars() {
 # Function to launch the web UI
 launch_web_ui() {
     print_status "Launching LinkedIn Posts MCP Web UI..."
-    print_status "The web interface will open in your browser at: http://localhost:5000"
+    print_status "The web interface will open in your browser at: http://localhost:5001"
     print_status "Press Ctrl+C to stop the server"
     
     # Launch the web UI
@@ -95,15 +95,15 @@ launch_web_ui() {
 open_browser() {
     if command -v open >/dev/null 2>&1; then
         # macOS
-        open http://localhost:5000
+        open http://localhost:5001
     elif command -v xdg-open >/dev/null 2>&1; then
         # Linux
-        xdg-open http://localhost:5000
+        xdg-open http://localhost:5001
     elif command -v start >/dev/null 2>&1; then
         # Windows
-        start http://localhost:5000
+        start http://localhost:5001
     else
-        print_warning "Could not automatically open browser. Please go to: http://localhost:5000"
+        print_warning "Could not automatically open browser. Please go to: http://localhost:5001"
     fi
 }
 
